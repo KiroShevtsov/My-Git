@@ -2,6 +2,41 @@
 #include <stdexcept>
 #include <ostream>
 #include <map>
+class Vector{
+    std::vector<double> v_;
+public:
+    Vector(const std::vector<double>& v) : v_(v){}
+    Vector(std::size_t ny, double a) : v_(ny, a){}
+    const std::vector<double>& data() const {return v_;}
+    Vector operator+(const Vector& o) const {
+        if(v_.size() != o.v_.size()) {throw std::invalid_argument("Impossible to sum vectors");}
+        std::vector<double> res = v_;
+        for(std::size_t i = 0; i < v_.size(); ++i){
+            res[i] += o.v_[i];
+        }
+        return {res};
+    }
+    Vector operator*(double a) const {
+        std::vector<double> res = v_;
+        for(auto& item : res){
+            item *= a;
+        }
+        return {res};
+    }
+    inline double operator*(const Vector& o) const;
+
+    double& operator[](std::size_t i) {return v_[i];}
+
+    const double& operator[](std::size_t i) const {return v_[i];}
+};
+double Vector::operator*(const Vector& o) const {
+    if(v_.size() != o.v_.size()) {throw std::invalid_argument("Impossible to mult vectors");}
+    double res = 0;
+    for(std::size_t i = 0; i < v_.size(); ++i){
+        res += v_[i] * o.v_[i];
+    }
+    return res;
+}
 class Matrix{
     std::vector<double> mtx_;
 public:
@@ -42,6 +77,17 @@ public:
         }
         return {o.nx_, ny_, res};
     }
+    Vector operator*(const Vector& v) const {
+        std::size_t v_size = v.data().size();
+        if(nx_ != v_size) {throw std::invalid_argument("Impossible to mult on vector");}
+        std::vector<double> res = v.data();
+        for(std::size_t i = 0; i < ny_; ++i){
+            for(std::size_t k = 0; k < v_size; ++k){
+                res[i] = mtx_[i * nx_ + k] * v[k];
+            }
+        }
+        return {res};
+    }
     Matrix operator*(double a) const {
         std::vector<double> res = mtx_;
         for(auto& item : res) {
@@ -50,15 +96,6 @@ public:
         return {nx_, ny_, res};
     }
 };
-inline std::ostream& operator<<(std::ostream& os, const Matrix& mtx){
-    for(std::size_t i = 0; i < mtx.ny_; ++i){
-        for(std::size_t j = 0; j < mtx.nx_; ++j){
-            os << mtx(i, j) << " ";
-        }
-        os << std::endl;
-    }
-    return os;
-}
 class CsrMatrix{
     std::vector<double> values_, cols_, rows_;
     using SparseMtx = std::map<std::pair<std::size_t, std::size_t>, double>;
@@ -68,7 +105,6 @@ public:
     const std::size_t ny_;
     
     CsrMatrix(std::size_t nx, std::size_t ny, const SparseMtx& mtx) : nx_(nx), ny_(ny), mtx_(mtx){
-        if(mtx.empty()) {throw std::invalid_argument("Mtx is empty");}
         /*rows(0) = 0*/
         rows_.push_back(0);
         std::size_t non_zero = 0;
@@ -115,6 +151,21 @@ public:
         }
         return {o.nx_, ny_, res};
     }
+
+    Vector operator*(const Vector& v) const {
+        std::size_t v_size = v.data().size();
+        if(nx_ != v_size) {throw std::invalid_argument("Impossible to mult on vector");}
+        std::vector<double> res(ny_);
+        for(std::size_t i = 0; i < ny_; ++i){
+            double current = 0;
+            for(std::size_t k = rows_[i]; k < rows_[i + 1]; ++k){
+                current += mtx_.at(std::make_pair(i, k)) * v[k];
+            }
+            res.push_back(current);
+        }
+        return {res};
+    }
+
     CsrMatrix operator+(const CsrMatrix& o) const {
         if(nx_ != o.nx_ or ny_ != o.ny_){throw std::invalid_argument("Impossible to sum");}
         SparseMtx res = mtx_;
