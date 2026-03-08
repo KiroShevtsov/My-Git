@@ -1,3 +1,4 @@
+#pragma once
 #include <vector>
 #include <stdexcept>
 #include <ostream>
@@ -17,7 +18,7 @@ public:
             sum = v_[i] + o.v_[i];
             res.push_back(sum);
         }
-        return {res};
+        return res;
     }
     Vector operator-(const Vector& o) const {
         if(v_.size() != o.v_.size()) {throw std::invalid_argument("Impossible to sum vectors");}
@@ -28,7 +29,7 @@ public:
             dif = v_[i] - o.v_[i];
             res.push_back(dif);
         }
-        return {res};
+        return res;
     }
     Vector operator*(double a) const {
         std::vector<double> res;
@@ -36,7 +37,7 @@ public:
         for(const auto& item : v_){
             res.push_back(a * item);
         }
-        return {res};
+        return res;
     }
     inline double operator*(const Vector& o) const;
 
