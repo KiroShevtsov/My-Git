@@ -6,9 +6,11 @@
 class Vector{
     std::vector<double> v_;
 public:
-    Vector(const std::vector<double>& v) : v_(v){}
+    Vector(const std::vector<double>& v) : v_(v){
+        if(v.empty()){throw std::invalid_argument("Vector is empty");}
+    }
     const std::vector<double>& data() const {return v_;}
-    
+
     Vector operator+(const Vector& o) const {
         if(v_.size() != o.v_.size()) {throw std::invalid_argument("Impossible to sum vectors");}
         std::vector<double> res;
@@ -17,17 +19,6 @@ public:
         for(std::size_t i = 0; i < v_.size(); ++i){
             sum = v_[i] + o.v_[i];
             res.push_back(sum);
-        }
-        return res;
-    }
-    Vector operator-(const Vector& o) const {
-        if(v_.size() != o.v_.size()) {throw std::invalid_argument("Impossible to sum vectors");}
-        std::vector<double> res;
-        res.reserve(v_.size());
-        double dif = 0;
-        for(std::size_t i = 0; i < v_.size(); ++i){
-            dif = v_[i] - o.v_[i];
-            res.push_back(dif);
         }
         return res;
     }
@@ -44,13 +35,15 @@ public:
     double& operator[](std::size_t i) {return v_[i];}
 
     const double& operator[](std::size_t i) const {return v_[i];}
-};
-inline std::ostream& operator<<(std::ostream& os, const Vector& v) {
-    for(const auto& item : v.data()){
-        os << item << " " << std::endl;
+    bool operator==(const Vector& o) const {return v_ == o.v_;}
+    std::size_t dim() const {return v_.size();}
+    friend std::ostream& operator<<(std::ostream& os, const Vector& v) {
+        for(auto item : v.data()){
+            os << item << " ";
+        }
+        return os;
     }
-    return os;
-}
+};
 double Vector::operator*(const Vector& o) const {
     if(v_.size() != o.v_.size()) {throw std::invalid_argument("Impossible to mult vectors");}
     double res = 0;
@@ -92,8 +85,8 @@ public:
         return {res};
     }
 };
-using SparseMtx = std::map<std::pair<std::size_t, std::size_t>, double>;
 class CsrMatrix{
+    using SparseMtx = std::map<std::pair<std::size_t, std::size_t>, double>;
     std::vector<double> values_;
     std::vector<std::size_t> cols_, rows_;
 public:
@@ -144,3 +137,5 @@ public:
         return {res};
     }
 };
+Vector SweepMethod(const std::vector<double>& a, const std::vector<double>& b,
+    const std::vector<double>& c, const Vector& d);
